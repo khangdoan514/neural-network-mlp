@@ -10,13 +10,10 @@
 
 ### **1. Chain rule**
 
-How a scalar loss $L$ pushes gradients backward through $y = g(x)$:
+How a scalar loss $L$ pushes gradients backward through $y=g(x)$:
 
 $$
-\frac{\partial L}{\partial x}
-=
-\frac{\partial L}{\partial y}\,
-\frac{\partial y}{\partial x}
+\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \frac{\partial y}{\partial x}
 $$
 
 ### **2. Finite differences**
@@ -24,9 +21,7 @@ $$
 Numerical check against analytic `.grad`:
 
 $$
-\partial_{i} f(x)
-\approx
-\frac{f(x+\varepsilon e_{i})-f(x-\varepsilon e_{i})}{2\varepsilon}
+\partial_i f(x) \approx \frac{f(x+\varepsilon e_i) - f(x-\varepsilon e_i)}{2\varepsilon}
 $$
 
 ### **3. Affine map**
@@ -37,21 +32,26 @@ $$
 y = xW + b
 $$
 
-with $x \in \mathbb{R}^{N \times d_{\mathrm{in}}}$,
-$W \in \mathbb{R}^{d_{\mathrm{in}} \times d_{\mathrm{out}}}$,
-$b \in \mathbb{R}^{d_{\mathrm{out}}}$.
+with $x \in \mathbb{R}^{N \times d_{\mathrm{in}}}$, $W \in \mathbb{R}^{d_{\mathrm{in}} \times d_{\mathrm{out}}}$, $b \in \mathbb{R}^{d_{\mathrm{out}}}$.
 
 ### **4. Activations**
 
 Elementwise nonlinearities (and softmax over a class axis):
 
 $$
-\begin{aligned}
-\mathrm{ReLU}(x) &= \max(x, 0) \\
-\sigma(x) &= \frac{1}{1 + e^{-x}} \\
-\tanh x &= \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}} \\
-\mathrm{softmax}(z)_{i} &= \frac{e^{z_{i}}}{\sum_{j} e^{z_{j}}}
-\end{aligned}
+\mathrm{ReLU}(x) = \max(x, 0)
+$$
+
+$$
+\sigma(x) = \frac{1}{1 + e^{-x}}
+$$
+
+$$
+\tanh x = \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}}
+$$
+
+$$
+\mathrm{softmax}(z)_i = \frac{e^{z_i}}{\sum_j e^{z_j}}
 $$
 
 ### **5. MSE**
@@ -59,7 +59,7 @@ $$
 Regression objective:
 
 $$
-L = \frac{1}{N}\sum_{i}(\hat{y}_{i} - y_{i})^{2}
+L = \frac{1}{N}\sum_i (\hat{y}_i - y_i)^2
 $$
 
 ### **6. Cross entropy**
@@ -67,13 +67,11 @@ $$
 Classification objective from class probabilities $p$:
 
 $$
-L = -\sum_{i} y_{i}\log p_{i}
-\quad \text{(one hot } y\text{)}
+L = -\sum_i y_i \log p_i \quad \text{(one hot } y\text{)}
 $$
 
 $$
-L = -\log p_{c}
-\quad \text{(class index } c\text{)}
+L = -\log p_c \quad \text{(class index } c\text{)}
 $$
 
 ### **7. SGD**
@@ -81,7 +79,7 @@ $$
 Basic parameter update:
 
 $$
-\theta \leftarrow \theta - \eta\, g
+\theta \leftarrow \theta - \eta g
 $$
 
 ### **8. SGD with momentum**
@@ -89,9 +87,7 @@ $$
 Velocity smoothed update:
 
 $$
-v \leftarrow \mu v + g,
-\qquad
-\theta \leftarrow \theta - \eta\, v
+v \leftarrow \mu v + g, \qquad \theta \leftarrow \theta - \eta v
 $$
 
 ### **9. Adam**
@@ -99,14 +95,19 @@ $$
 Adaptive moments:
 
 $$
-\begin{aligned}
-m &\leftarrow \beta_{1} m + (1-\beta_{1})g \\
-v &\leftarrow \beta_{2} v + (1-\beta_{2})g^{2} \\
-\hat{m} &= \frac{m}{1-\beta_{1}^{t}},
-\quad
-\hat{v} = \frac{v}{1-\beta_{2}^{t}} \\
-\theta &\leftarrow \theta - \eta\,\frac{\hat{m}}{\sqrt{\hat{v}}+\varepsilon}
-\end{aligned}
+m \leftarrow \beta_1 m + (1-\beta_1)g
+$$
+
+$$
+v \leftarrow \beta_2 v + (1-\beta_2)g^2
+$$
+
+$$
+\hat{m} = \frac{m}{1-\beta_1^t}, \quad \hat{v} = \frac{v}{1-\beta_2^t}
+$$
+
+$$
+\theta \leftarrow \theta - \eta \frac{\hat{m}}{\sqrt{\hat{v}}+\varepsilon}
 $$
 
 ---
