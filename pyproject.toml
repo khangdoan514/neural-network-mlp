@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neural-network-mlp"
+version = "0.1.0"
+description = "Multilayer perceptron and reverse mode autograd engine built from scratch with NumPy only. Learn tensors, backpropagation, layers, losses, optimizers, and training through an ordered step by step curriculum with working XOR, moons, and spirals demos"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
