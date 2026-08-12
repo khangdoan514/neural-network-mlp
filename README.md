@@ -132,7 +132,7 @@ $$
 ## **Getting Started**
 
 ```bash
-git clone https://github.com/<username>/neural-network-mlp.git
+git clone https://github.com/khangdoan514/neural-network-mlp
 cd neural-network-mlp
 
 python -m venv .venv
