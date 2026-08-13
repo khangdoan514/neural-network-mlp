@@ -122,7 +122,7 @@ $$
 | 04 | Modules and `Linear` | `src/modules.py` | [docs/Layers.md](docs/Layers.md) |
 | 05 | Activations | `ReLU`, `Tanh`, `Sigmoid`, `Softmax` | [docs/Activations.md](docs/Activations.md) |
 | 06 | Losses | `src/losses.py` | [docs/Losses.md](docs/Losses.md) |
-| 07 | Optimizers | `src/optim.py` | [docs/Optimizers.md](docs/Optimizers.md) |
+| 07 | Optimizers | `src/optimizers.py` | [docs/Optimizers.md](docs/Optimizers.md) |
 | 08 | MLP (`Sequential`) | `src/modules.py` | [docs/MLP.md](docs/MLP.md) |
 | 09 | Training loop | `src/training.py` | [docs/Training.md](docs/Training.md) |
 | 10 | Experiments | `examples/` | [docs/Experiments.md](docs/Experiments.md) |
@@ -168,7 +168,7 @@ from src.training import accuracy_binary
 
 x, y = make_xor()
 model = Sequential(Linear(2, 16), ReLU(), Linear(16, 1))
-train(model, BCEWithLogitsLoss(), Adam(model.parameters(), lr=0.05), x, y, epochs=100, metric_fn=accuracy_binary)
+train(model, BCEWithLogitsLoss(), Adam(model.parameters(), learning_rate=0.05), x, y, epochs=100, metric_fn=accuracy_binary)
 ```
 
 ---
@@ -182,7 +182,7 @@ neural-network-mlp/
 │   ├── gradcheck.py    # Finite difference checks
 │   ├── modules.py      # Linear, activations, Sequential
 │   ├── losses.py       # MSE, BCE, CrossEntropy
-│   ├── optim.py        # SGD, Adam
+│   ├── optimizers.py   # SGD, Adam
 │   ├── training.py     # Minibatch train loop
 │   └── data.py         # XOR / moons / spirals
 │
