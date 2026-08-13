@@ -168,7 +168,15 @@ from src.training import accuracy_binary
 
 x, y = make_xor()
 model = Sequential(Linear(2, 16), ReLU(), Linear(16, 1))
-train(model, BCEWithLogitsLoss(), Adam(model.parameters(), learning_rate=0.05), x, y, epochs=100, metric_fn=accuracy_binary)
+train(
+    model,
+    BCEWithLogitsLoss(),
+    Adam(model.parameters(), learning_rate=0.05),
+    x,
+    y,
+    epochs=100,
+    metric_function=accuracy_binary,
+)
 ```
 
 ---
