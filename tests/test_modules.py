@@ -20,10 +20,7 @@ def test_linear_gradcheck():
 
 def test_activation_modules():
     input_tensor = Tensor([[-1.0, 0.5, 2.0]], requires_grad=True)
-    passed_relu, relative_error = check_tensor_gradient(
-        lambda tensor: ReLU()(tensor).power(2).sum(),
-        input_tensor,
-    )
+    passed_relu, relative_error = check_tensor_gradient(lambda tensor: ReLU()(tensor).power(2).sum(), input_tensor)
     assert passed_relu, relative_error
 
     logits = Tensor([[1.0, 2.0, 3.0], [0.1, -0.2, 0.3]], requires_grad=True)
@@ -56,6 +53,7 @@ def test_mse_decreases_with_sgd():
         loss.backward()
         optimizer.step()
         losses.append(float(loss.data))
+
     assert losses[-1] < losses[0] * 0.5
 
 def test_bce_and_ce_finite():
@@ -74,17 +72,11 @@ def test_bce_and_ce_finite():
 def test_loss_gradcheck():
     prediction = Tensor([[0.5], [-0.2]], requires_grad=True)
     target = [[1.0], [0.0]]
-    passed_mse, relative_error_mse = check_tensor_gradient(
-        lambda tensor: MSELoss()(tensor, target),
-        prediction,
-    )
+    passed_mse, relative_error_mse = check_tensor_gradient(lambda tensor: MSELoss()(tensor, target), prediction)
     assert passed_mse, relative_error_mse
 
     logits = Tensor([[0.2], [-0.5], [1.0]], requires_grad=True)
-    passed_bce, relative_error_bce = check_tensor_gradient(
-        lambda tensor: BCEWithLogitsLoss()(tensor, [[1.0], [0.0], [1.0]]),
-        logits,
-    )
+    passed_bce, relative_error_bce = check_tensor_gradient(lambda tensor: BCEWithLogitsLoss()(tensor, [[1.0], [0.0], [1.0]]), logits)
     assert passed_bce, relative_error_bce
 
 def test_adam_steps():

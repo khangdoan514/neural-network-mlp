@@ -9,14 +9,18 @@ class Module:
         for value in self.__dict__.values():
             if isinstance(value, Tensor) and value.requires_grad:
                 parameters.append(value)
+
             elif isinstance(value, Module):
                 parameters.extend(value.parameters())
+
             elif isinstance(value, list | tuple):
                 for item in value:
                     if isinstance(item, Module):
                         parameters.extend(item.parameters())
+
                     elif isinstance(item, Tensor) and item.requires_grad:
                         parameters.append(item)
+
         return parameters
 
     def zero_grad(self) -> None:
@@ -40,27 +44,18 @@ class Module:
         raise NotImplementedError
 
 class Linear(Module):
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        *,
-        bias: bool = True,
-        random_generator: np.random.Generator | None = None,
-    ) -> None:
+    def __init__(self, in_features: int, out_features: int, *, bias: bool = True, random_generator: np.random.Generator | None = None) -> None:
         super().__init__()
         random_generator = random_generator or np.random.default_rng()
         scale = np.sqrt(2.0 / in_features)
-        self.weight = Tensor(
-            random_generator.normal(0.0, scale, size=(in_features, out_features)),
-            requires_grad=True,
-        )
+        self.weight = Tensor(random_generator.normal(0.0, scale, size=(in_features, out_features)), requires_grad=True)
         self.bias = Tensor(np.zeros(out_features), requires_grad=True) if bias else None
 
     def forward(self, input: Tensor) -> Tensor:
         output = input.matmul(self.weight)
         if self.bias is not None:
             output = output.add(self.bias)
+
         return output
 
 class ReLU(Module):
@@ -90,12 +85,14 @@ class Sequential(Module):
         output = input
         for layer in self.layers:
             output = layer(output)
+
         return output
 
     def parameters(self) -> list[Tensor]:
         parameters: list[Tensor] = []
         for layer in self.layers:
             parameters.extend(layer.parameters())
+
         return parameters
 
     def __iter__(self) -> Iterator[Module]:

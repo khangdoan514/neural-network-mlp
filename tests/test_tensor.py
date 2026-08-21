@@ -21,10 +21,7 @@ def test_matmul_backward():
 
 def test_relu_gradcheck():
     input_tensor = Tensor(np.array([-1.0, 0.5, 2.0]), requires_grad=True)
-    passed, relative_error = check_tensor_gradient(
-        lambda tensor: tensor.relu().power(2).sum(),
-        input_tensor,
-    )
+    passed, relative_error = check_tensor_gradient(lambda tensor: tensor.relu().power(2).sum(), input_tensor)
     assert passed, relative_error
 
 def test_tanh_sigmoid_gradcheck():
