@@ -157,16 +157,17 @@ pytest -q
 python examples/train_xor.py
 python examples/train_moons.py
 python examples/train_spirals.py
+python examples/train_mnist.py
 ```
 
 ### **Minimal Usage**
 
 ```python
 from src import Tensor, Linear, ReLU, Sequential, Adam, BCEWithLogitsLoss, train
-from src.data import make_xor
+from src.data import xor
 from src.training import accuracy_binary
 
-x, y = make_xor()
+x, y = xor()
 model = Sequential(Linear(2, 16), ReLU(), Linear(16, 1))
 train(
     model,
@@ -192,7 +193,10 @@ neural-network-mlp/
 │   ├── losses.py       # MSE, BCE, CrossEntropy
 │   ├── optimizers.py   # SGD, Adam
 │   ├── training.py     # Minibatch train loop
-│   └── data.py         # XOR / moons / spirals
+│   └── data.py         # XOR / moons / spirals / MNIST
+│
+├── data/
+│   └── mnist/          # Classic IDX files
 │
 ├── docs/               # Step-by-step guides
 ├── examples/           # Runnable demos
