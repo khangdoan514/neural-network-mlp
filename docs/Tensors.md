@@ -28,6 +28,7 @@ Common MLP shapes:
 def as_data(x: ArrayLike | Tensor) -> NDArray[np.float64]:
     if isinstance(x, Tensor):
         return x.data
+
     return np.asarray(x, dtype=np.float64)
 ```
 
@@ -39,11 +40,14 @@ When NumPy broadcasts shapes in the forward pass, the upstream gradient may be l
 def unbroadcast(grad: NDArray[np.float64], shape: tuple[int, ...]) -> NDArray[np.float64]:
     if grad.shape == shape:
         return grad
+
     while grad.ndim > len(shape):
         grad = grad.sum(axis=0)
-    for i, (g, s) in enumerate(zip(grad.shape, shape, strict=True)):
-        if s == 1 and g != 1:
-            grad = grad.sum(axis=i, keepdims=True)
+
+    for index, (grad_size, shape_size) in enumerate(zip(grad.shape, shape, strict=True)):
+        if shape_size == 1 and grad_size != 1:
+            grad = grad.sum(axis=index, keepdims=True)
+
     return grad.reshape(shape)
 ```
 
@@ -71,23 +75,15 @@ A differentiable multidimensional array.
 
 ```python
 class Tensor:
-    def __init__(
-        self,
-        data: ArrayLike | Tensor,
-        *,
-        requires_grad: bool = False,
-        children: Iterable[Tensor] = (),
-        operation: str = "",
-        gradient_function: Callable[[], None] | None = None,
-    ) -> None:
+    def __init__(self, data: ArrayLike | Tensor, *, requires_grad: bool = False, children: Iterable[Tensor] = (), operation: str = "", gradient_function: Callable[[], None] | None = None) -> None:
         if isinstance(data, Tensor):
             self.data = data.data.copy()
+
         else:
             self.data = np.asarray(data, dtype=np.float64)
-        self.requires_grad = bool(requires_grad) or any(c.requires_grad for c in children)
-        self.grad: NDArray[np.float64] | None = (
-            np.zeros_like(self.data) if self.requires_grad else None
-        )
+
+        self.requires_grad = bool(requires_grad) or any(child.requires_grad for child in children)
+        self.grad: NDArray[np.float64] | None = np.zeros_like(self.data) if self.requires_grad else None
         self.parents = tuple(children)
         self.operation = operation
         self.gradient_function = gradient_function or (lambda: None)
@@ -111,12 +107,9 @@ def ones(shape: tuple[int, ...], requires_grad: bool = False) -> Tensor:
     return Tensor(np.ones(shape, dtype=np.float64), requires_grad=requires_grad)
 
 @staticmethod
-def randn(
-    *shape: int,
-    requires_grad: bool = False,
-    random_generator: np.random.Generator | None = None,
-) -> Tensor:
+def randn(*shape: int, requires_grad: bool = False, random_generator: np.random.Generator | None = None) -> Tensor:
     random_generator = random_generator or np.random.default_rng()
+
     return Tensor(random_generator.standard_normal(shape, dtype=np.float64), requires_grad=requires_grad)
 ```
 
@@ -137,42 +130,23 @@ Each op stores a local backward closure on the output tensor. How those closures
 Most elementwise binary ops go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
 
 ```python
-def binary(
-    self,
-    other: ArrayLike | Tensor,
-    *,
-    forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
-    backward_for_a: Callable[
-        [NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]
-    ],
-    backward_for_b: Callable[
-        [NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]
-    ],
-    operation: str,
-) -> Tensor:
-    b = other if isinstance(other, Tensor) else Tensor(other)
-    out_data = forward(self.data, b.data)
-    out = Tensor(
-        out_data,
-        requires_grad=self.requires_grad or b.requires_grad,
-        children=(self, b),
-        operation=operation,
-    )
+def binary(self, other: ArrayLike | Tensor, *, forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_a: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_b: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], operation: str) -> Tensor:
+    right = other if isinstance(other, Tensor) else Tensor(other)
+    out_data = forward(self.data, right.data)
+    out = Tensor(out_data, requires_grad=self.requires_grad or right.requires_grad, children=(self, right), operation=operation)
 
     def local_backward() -> None:
         assert out.grad is not None
         if self.requires_grad:
             assert self.grad is not None
-            self.grad += unbroadcast(
-                backward_for_a(out.grad, self.data, b.data), self.data.shape
-            )
-        if b.requires_grad:
-            assert b.grad is not None
-            b.grad += unbroadcast(
-                backward_for_b(out.grad, self.data, b.data), b.data.shape
-            )
+            self.grad += unbroadcast(backward_for_a(out.grad, self.data, right.data), self.data.shape)
+
+        if right.requires_grad:
+            assert right.grad is not None
+            right.grad += unbroadcast(backward_for_b(out.grad, self.data, right.data), right.data.shape)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -193,13 +167,7 @@ def binary(
 
 ```python
 def multiply(self, other: ArrayLike | Tensor) -> Tensor:
-    return self.binary(
-        other,
-        forward=lambda a, b: a * b,
-        backward_for_a=lambda g, a, b: g * b,
-        backward_for_b=lambda g, a, b: g * a,
-        operation="mul",
-    )
+    return self.binary(other, forward=lambda left, right: left * right, backward_for_a=lambda gradient, left, right: gradient * right, backward_for_b=lambda gradient, left, right: gradient * left, operation="mul")
 ```
 
 ### **Example: matmul()**
@@ -208,24 +176,21 @@ Matmul does not use `binary`; the local rule is written directly.
 
 ```python
 def matmul(self, other: ArrayLike | Tensor) -> Tensor:
-    b = other if isinstance(other, Tensor) else Tensor(other)
-    out = Tensor(
-        self.data @ b.data,
-        requires_grad=self.requires_grad or b.requires_grad,
-        children=(self, b),
-        operation="matmul",
-    )
+    right = other if isinstance(other, Tensor) else Tensor(other)
+    out = Tensor(self.data @ right.data, requires_grad=self.requires_grad or right.requires_grad, children=(self, right), operation="matmul")
 
     def local_backward() -> None:
         assert out.grad is not None
         if self.requires_grad:
             assert self.grad is not None
-            self.grad += out.grad @ b.data.T
-        if b.requires_grad:
-            assert b.grad is not None
-            b.grad += self.data.T @ out.grad
+            self.grad += out.grad @ right.data.T
+
+        if right.requires_grad:
+            assert right.grad is not None
+            right.grad += self.data.T @ out.grad
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -256,20 +221,21 @@ $$
 ```python
 def softmax(self, axis: int = -1) -> Tensor:
     shifted = self.data - np.max(self.data, axis=axis, keepdims=True)
-    ex = np.exp(shifted)
-    probs = ex / np.sum(ex, axis=axis, keepdims=True)
-    out = Tensor(probs, requires_grad=self.requires_grad, children=(self,), operation="softmax")
+    exponentials = np.exp(shifted)
+    probabilities = exponentials / np.sum(exponentials, axis=axis, keepdims=True)
+    out = Tensor(probabilities, requires_grad=self.requires_grad, children=(self,), operation="softmax")
 
     def local_backward() -> None:
         if not self.requires_grad:
             return
+
         assert self.grad is not None and out.grad is not None
-        g = out.grad
-        p = probs
-        sum_gp = np.sum(g * p, axis=axis, keepdims=True)
-        self.grad += p * (g - sum_gp)
+        gradient = out.grad
+        sum_gradient_probability = np.sum(gradient * probabilities, axis=axis, keepdims=True)
+        self.grad += probabilities * (gradient - sum_gradient_probability)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -288,6 +254,7 @@ def get_item(self, item: Any) -> Tensor:
             np.add.at(self.grad, item, out.grad)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -300,9 +267,9 @@ from src import Tensor
 
 a = Tensor([[1.0, 2.0]], requires_grad=True)
 b = a.multiply(3.0)
-print(b.data)  # [[3.0, 6.0]]
+print(b.data)
 
 loss = b.sum()
 loss.backward()
-print(a.grad)  # [[3.0, 3.0]]
+print(a.grad)
 ```

@@ -25,10 +25,12 @@ An epoch is one full pass over the shuffled dataset. With `batch_size=None`, the
 ```python
 def accuracy_binary(logits: Tensor, target: np.ndarray) -> float:
     prediction = (logits.data >= 0.0).astype(np.float64)
+
     return float(np.mean(prediction.reshape(-1) == target.reshape(-1)))
 
 def accuracy_multiclass(logits: Tensor, target: np.ndarray) -> float:
     prediction = np.argmax(logits.data, axis=1)
+
     return float(np.mean(prediction == target.reshape(-1)))
 ```
 
@@ -39,32 +41,17 @@ Binary accuracy thresholds logits at $0$ (same decision as $\sigma(z) \ge 1/2$).
 ## **`train()`**
 
 ```python
-def train(
-    model: Module,
-    loss_function: Module,
-    optimizer: Optimizer,
-    inputs: np.ndarray,
-    targets: np.ndarray,
-    *,
-    epochs: int = 100,
-    batch_size: int | None = None,
-    metric_function: Callable[[Tensor, np.ndarray], float] | None = None,
-    random_generator: np.random.Generator | None = None,
-    verbose: bool = True,
-    log_every: int = 10,
-) -> TrainingHistory:
+def train(model: Module, loss_function: Module, optimizer: Optimizer, inputs: np.ndarray, targets: np.ndarray, *, epochs: int = 100, batch_size: int | None = None, metric_function: Callable[[Tensor, np.ndarray], float] | None = None, random_generator: np.random.Generator | None = None, verbose: bool = True, log_every: int = 10) -> TrainingHistory:
     random_generator = random_generator or np.random.default_rng(0)
     sample_count = inputs.shape[0]
     batch_size = batch_size or sample_count
     history = TrainingHistory(loss=[], metric=[])
-
     for epoch in range(1, epochs + 1):
         permutation = random_generator.permutation(sample_count)
         shuffled_inputs = inputs[permutation]
         shuffled_targets = targets[permutation]
         batch_losses: list[float] = []
         batch_metrics: list[float] = []
-
         for start in range(0, sample_count, batch_size):
             batch_inputs = shuffled_inputs[start : start + batch_size]
             batch_targets = shuffled_targets[start : start + batch_size]
@@ -81,10 +68,10 @@ def train(
         epoch_metric = float(np.mean(batch_metrics)) if batch_metrics else float("nan")
         history.loss.append(epoch_loss)
         history.metric.append(epoch_metric)
-
         if verbose and (epoch % log_every == 0 or epoch == 1 or epoch == epochs):
             if metric_function is None:
                 print(f"epoch {epoch:4d} | loss {epoch_loss:.6f}")
+
             else:
                 print(f"epoch {epoch:4d} | loss {epoch_loss:.6f} | metric {epoch_metric:.4f}")
 
@@ -103,21 +90,11 @@ Explanation:
 
 ```python
 from src import Tensor, Linear, ReLU, Sequential, Adam, BCEWithLogitsLoss, train
-from src.data import make_xor
+from src.data import xor
 from src.training import accuracy_binary
 
-inputs, targets = make_xor()
+inputs, targets = xor()
 model = Sequential(Linear(2, 16), ReLU(), Linear(16, 1))
-history = train(
-    model,
-    BCEWithLogitsLoss(),
-    Adam(model.parameters(), learning_rate=0.05),
-    inputs,
-    targets,
-    epochs=100,
-    batch_size=32,
-    metric_function=accuracy_binary,
-    verbose=False,
-)
+history = train(model, BCEWithLogitsLoss(), Adam(model.parameters(), learning_rate=0.05), inputs, targets, epochs=100, batch_size=32, metric_function=accuracy_binary, verbose=False)
 print(history.loss[-1], history.metric[-1])
 ```

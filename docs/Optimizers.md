@@ -73,13 +73,7 @@ Plain SGD, or SGD with momentum when `momentum > 0`.
 
 ```python
 class SGD(Optimizer):
-    def __init__(
-        self,
-        parameters: Iterable[Tensor],
-        learning_rate: float = 0.01,
-        momentum: float = 0.0,
-        weight_decay: float = 0.0,
-    ) -> None:
+    def __init__(self, parameters: Iterable[Tensor], learning_rate: float = 0.01, momentum: float = 0.0, weight_decay: float = 0.0) -> None:
         super().__init__(parameters)
         self.learning_rate = learning_rate
         self.momentum = momentum
@@ -90,12 +84,15 @@ class SGD(Optimizer):
         for index, parameter in enumerate(self.parameters):
             if parameter.grad is None:
                 continue
+
             gradient = parameter.grad
             if self.weight_decay != 0.0:
                 gradient = gradient + self.weight_decay * parameter.data
+
             if self.momentum != 0.0:
                 self.velocity[index] = self.momentum * self.velocity[index] + gradient
                 gradient = self.velocity[index]
+
             parameter.data = parameter.data - self.learning_rate * gradient
 ```
 
@@ -107,15 +104,7 @@ Adaptive moments with bias correction.
 
 ```python
 class Adam(Optimizer):
-    def __init__(
-        self,
-        parameters: Iterable[Tensor],
-        learning_rate: float = 1e-3,
-        beta1: float = 0.9,
-        beta2: float = 0.999,
-        epsilon: float = 1e-8,
-        weight_decay: float = 0.0,
-    ) -> None:
+    def __init__(self, parameters: Iterable[Tensor], learning_rate: float = 1e-3, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-8, weight_decay: float = 0.0) -> None:
         super().__init__(parameters)
         self.learning_rate = learning_rate
         self.beta1 = beta1
@@ -131,21 +120,16 @@ class Adam(Optimizer):
         for index, parameter in enumerate(self.parameters):
             if parameter.grad is None:
                 continue
+
             gradient = parameter.grad
             if self.weight_decay != 0.0:
                 gradient = gradient + self.weight_decay * parameter.data
-            self.first_moment[index] = (
-                self.beta1 * self.first_moment[index] + (1.0 - self.beta1) * gradient
-            )
-            self.second_moment[index] = (
-                self.beta2 * self.second_moment[index]
-                + (1.0 - self.beta2) * (gradient * gradient)
-            )
+
+            self.first_moment[index] = self.beta1 * self.first_moment[index] + (1.0 - self.beta1) * gradient
+            self.second_moment[index] = self.beta2 * self.second_moment[index] + (1.0 - self.beta2) * (gradient * gradient)
             first_moment_hat = self.first_moment[index] / (1.0 - self.beta1**self.timestep)
             second_moment_hat = self.second_moment[index] / (1.0 - self.beta2**self.timestep)
-            parameter.data = parameter.data - self.learning_rate * first_moment_hat / (
-                np.sqrt(second_moment_hat) + self.epsilon
-            )
+            parameter.data = parameter.data - self.learning_rate * first_moment_hat / (np.sqrt(second_moment_hat) + self.epsilon)
 ```
 
 Explanation:

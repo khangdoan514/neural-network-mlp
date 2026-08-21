@@ -62,13 +62,13 @@ def backward(self, gradient: ArrayLike | None = None) -> None:
     if gradient is None:
         if self.data.size != 1:
             raise RuntimeError("backward for non-scalar requires an explicit gradient")
+
         gradient = np.ones_like(self.data)
+
     else:
         gradient = np.asarray(gradient, dtype=np.float64)
         if gradient.shape != self.data.shape:
-            raise ValueError(
-                f"gradient shape {gradient.shape} != tensor shape {self.data.shape}"
-            )
+            raise ValueError(f"gradient shape {gradient.shape} != tensor shape {self.data.shape}")
 
     topo: list[Tensor] = []
     visited: set[int] = set()
@@ -76,13 +76,14 @@ def backward(self, gradient: ArrayLike | None = None) -> None:
     def build(node: Tensor) -> None:
         if id(node) in visited:
             return
+
         visited.add(id(node))
         for parent in node.parents:
             build(parent)
+
         topo.append(node)
 
     build(self)
-
     self.grad = gradient.copy()
     for node in reversed(topo):
         node.gradient_function()
@@ -112,42 +113,23 @@ def zero_grad(self) -> None:
 Most elementwise binary ops go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
 
 ```python
-def binary(
-    self,
-    other: ArrayLike | Tensor,
-    *,
-    forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]],
-    backward_for_a: Callable[
-        [NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]
-    ],
-    backward_for_b: Callable[
-        [NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]
-    ],
-    operation: str,
-) -> Tensor:
-    b = other if isinstance(other, Tensor) else Tensor(other)
-    out_data = forward(self.data, b.data)
-    out = Tensor(
-        out_data,
-        requires_grad=self.requires_grad or b.requires_grad,
-        children=(self, b),
-        operation=operation,
-    )
+def binary(self, other: ArrayLike | Tensor, *, forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_a: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_b: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], operation: str) -> Tensor:
+    right = other if isinstance(other, Tensor) else Tensor(other)
+    out_data = forward(self.data, right.data)
+    out = Tensor(out_data, requires_grad=self.requires_grad or right.requires_grad, children=(self, right), operation=operation)
 
     def local_backward() -> None:
         assert out.grad is not None
         if self.requires_grad:
             assert self.grad is not None
-            self.grad += unbroadcast(
-                backward_for_a(out.grad, self.data, b.data), self.data.shape
-            )
-        if b.requires_grad:
-            assert b.grad is not None
-            b.grad += unbroadcast(
-                backward_for_b(out.grad, self.data, b.data), b.data.shape
-            )
+            self.grad += unbroadcast(backward_for_a(out.grad, self.data, right.data), self.data.shape)
+
+        if right.requires_grad:
+            assert right.grad is not None
+            right.grad += unbroadcast(backward_for_b(out.grad, self.data, right.data), right.data.shape)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -157,13 +139,7 @@ def binary(
 
 ```python
 def multiply(self, other: ArrayLike | Tensor) -> Tensor:
-    return self.binary(
-        other,
-        forward=lambda a, b: a * b,
-        backward_for_a=lambda g, a, b: g * b,
-        backward_for_b=lambda g, a, b: g * a,
-        operation="mul",
-    )
+    return self.binary(other, forward=lambda left, right: left * right, backward_for_a=lambda gradient, left, right: gradient * right, backward_for_b=lambda gradient, left, right: gradient * left, operation="mul")
 ```
 
 ### **Example: matmul()**
@@ -172,24 +148,21 @@ Matmul does not use `binary`; the local rule is written directly.
 
 ```python
 def matmul(self, other: ArrayLike | Tensor) -> Tensor:
-    b = other if isinstance(other, Tensor) else Tensor(other)
-    out = Tensor(
-        self.data @ b.data,
-        requires_grad=self.requires_grad or b.requires_grad,
-        children=(self, b),
-        operation="matmul",
-    )
+    right = other if isinstance(other, Tensor) else Tensor(other)
+    out = Tensor(self.data @ right.data, requires_grad=self.requires_grad or right.requires_grad, children=(self, right), operation="matmul")
 
     def local_backward() -> None:
         assert out.grad is not None
         if self.requires_grad:
             assert self.grad is not None
-            self.grad += out.grad @ b.data.T
-        if b.requires_grad:
-            assert b.grad is not None
-            b.grad += self.data.T @ out.grad
+            self.grad += out.grad @ right.data.T
+
+        if right.requires_grad:
+            assert right.grad is not None
+            right.grad += self.data.T @ out.grad
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -232,7 +205,7 @@ y = x.matmul(w).relu()
 loss = y.mean()
 loss.backward()
 
-print(loss.data)  # scalar
-print(x.grad)  # same shape as x
-print(w.grad)  # same shape as w
+print(loss.data)
+print(x.grad)
+print(w.grad)
 ```

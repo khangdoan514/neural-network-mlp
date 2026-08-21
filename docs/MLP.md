@@ -37,12 +37,14 @@ class Sequential(Module):
         output = input
         for layer in self.layers:
             output = layer(output)
+
         return output
 
     def parameters(self) -> list[Tensor]:
         parameters: list[Tensor] = []
         for layer in self.layers:
             parameters.extend(layer.parameters())
+
         return parameters
 
     def __iter__(self) -> Iterator[Module]:
@@ -86,13 +88,10 @@ model = Sequential(
 )
 x = Tensor([[0.1, -0.2], [0.3, 0.4]])
 y = model(x)
-print(y.shape)  # (2, 1)
-print(len(model.parameters()))  # 4 = two weights + two biases
+print(y.shape)
+print(len(model.parameters()))
 
 x = Tensor([[0.5, -1.0]], requires_grad=True)
-passed, relative_error = check_tensor_gradient(
-    lambda tensor: model(tensor).sum(),
-    x,
-)
+passed, relative_error = check_tensor_gradient(lambda tensor: model(tensor).sum(), x)
 print(passed, relative_error)
 ```

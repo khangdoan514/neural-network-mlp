@@ -167,17 +167,9 @@ from src import Tensor, Linear, ReLU, Sequential, Adam, BCEWithLogitsLoss, train
 from src.data import xor
 from src.training import accuracy_binary
 
-x, y = xor()
+inputs, targets = xor()
 model = Sequential(Linear(2, 16), ReLU(), Linear(16, 1))
-train(
-    model,
-    BCEWithLogitsLoss(),
-    Adam(model.parameters(), learning_rate=0.05),
-    x,
-    y,
-    epochs=100,
-    metric_function=accuracy_binary,
-)
+train(model, BCEWithLogitsLoss(), Adam(model.parameters(), learning_rate=0.05), inputs, targets, epochs=100, metric_function=accuracy_binary)
 ```
 
 ---

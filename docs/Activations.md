@@ -27,12 +27,7 @@ Softmax is usually applied over the class axis. The backward pass uses the Jacob
 
 ```python
 def relu(self) -> Tensor:
-    out = Tensor(
-        np.maximum(self.data, 0.0),
-        requires_grad=self.requires_grad,
-        children=(self,),
-        operation="relu",
-    )
+    out = Tensor(np.maximum(self.data, 0.0), requires_grad=self.requires_grad, children=(self,), operation="relu")
 
     def local_backward() -> None:
         if self.requires_grad:
@@ -40,6 +35,7 @@ def relu(self) -> Tensor:
             self.grad += out.grad * (self.data > 0.0)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -47,15 +43,16 @@ def relu(self) -> Tensor:
 
 ```python
 def tanh(self) -> Tensor:
-    t = np.tanh(self.data)
-    out = Tensor(t, requires_grad=self.requires_grad, children=(self,), operation="tanh")
+    values = np.tanh(self.data)
+    out = Tensor(values, requires_grad=self.requires_grad, children=(self,), operation="tanh")
 
     def local_backward() -> None:
         if self.requires_grad:
             assert self.grad is not None and out.grad is not None
-            self.grad += out.grad * (1.0 - t**2)
+            self.grad += out.grad * (1.0 - values**2)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -63,15 +60,16 @@ def tanh(self) -> Tensor:
 
 ```python
 def sigmoid(self) -> Tensor:
-    s = 1.0 / (1.0 + np.exp(-self.data))
-    out = Tensor(s, requires_grad=self.requires_grad, children=(self,), operation="sigmoid")
+    values = 1.0 / (1.0 + np.exp(-self.data))
+    out = Tensor(values, requires_grad=self.requires_grad, children=(self,), operation="sigmoid")
 
     def local_backward() -> None:
         if self.requires_grad:
             assert self.grad is not None and out.grad is not None
-            self.grad += out.grad * s * (1.0 - s)
+            self.grad += out.grad * values * (1.0 - values)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -82,20 +80,21 @@ Stable softmax (subtract max before `exp`). Backward uses the JVP form from the 
 ```python
 def softmax(self, axis: int = -1) -> Tensor:
     shifted = self.data - np.max(self.data, axis=axis, keepdims=True)
-    ex = np.exp(shifted)
-    probs = ex / np.sum(ex, axis=axis, keepdims=True)
-    out = Tensor(probs, requires_grad=self.requires_grad, children=(self,), operation="softmax")
+    exponentials = np.exp(shifted)
+    probabilities = exponentials / np.sum(exponentials, axis=axis, keepdims=True)
+    out = Tensor(probabilities, requires_grad=self.requires_grad, children=(self,), operation="softmax")
 
     def local_backward() -> None:
         if not self.requires_grad:
             return
+
         assert self.grad is not None and out.grad is not None
-        g = out.grad
-        p = probs
-        sum_gp = np.sum(g * p, axis=axis, keepdims=True)
-        self.grad += p * (g - sum_gp)
+        gradient = out.grad
+        sum_gradient_probability = np.sum(gradient * probabilities, axis=axis, keepdims=True)
+        self.grad += probabilities * (gradient - sum_gradient_probability)
 
     out.gradient_function = local_backward
+
     return out
 ```
 
@@ -142,13 +141,10 @@ from src.gradcheck import check_tensor_gradient
 from src.modules import ReLU, Softmax
 
 x = Tensor([-1.0, 0.5, 2.0], requires_grad=True)
-passed, relative_error = check_tensor_gradient(
-    lambda tensor: ReLU()(tensor).power(2).sum(),
-    x,
-)
+passed, relative_error = check_tensor_gradient(lambda tensor: ReLU()(tensor).power(2).sum(), x)
 print(passed, relative_error)
 
 logits = Tensor([[1.0, 2.0, 3.0]], requires_grad=True)
 probs = Softmax(axis=1)(logits)
-print(probs.data.sum(axis=1))  # [1.0]
+print(probs.data.sum(axis=1))
 ```

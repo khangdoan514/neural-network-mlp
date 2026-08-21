@@ -29,12 +29,7 @@ With $\varepsilon \approx 10^{-5}$, a healthy relative error is about $10^{-5}$ 
 Walk every index of the array, evaluate $f$ at $x_i \pm \varepsilon$, and fill one entry of the numeric gradient.
 
 ```python
-def finite_difference_gradient(
-    function: Callable[[NDArray[np.float64]], float],
-    data: NDArray[np.float64],
-    *,
-    epsilon: float = 1e-5,
-) -> NDArray[np.float64]:
+def finite_difference_gradient(function: Callable[[NDArray[np.float64]], float], data: NDArray[np.float64], *, epsilon: float = 1e-5) -> NDArray[np.float64]:
     gradient = np.zeros_like(data, dtype=np.float64)
     iterator = np.nditer(data, flags=["multi_index"], op_flags=["readwrite"])
     while not iterator.finished:
@@ -47,6 +42,7 @@ def finite_difference_gradient(
         data[index] = original
         gradient[index] = (value_plus - value_minus) / (2.0 * epsilon)
         iterator.iternext()
+
     return gradient
 ```
 
@@ -63,14 +59,7 @@ Explanation:
 Runs analytic `.backward()`, then rebuilds the same scalar loss from raw NumPy data for the finite difference sweep.
 
 ```python
-def check_tensor_gradient(
-    make_loss: Callable[[Tensor], Tensor],
-    tensor: Tensor,
-    *,
-    epsilon: float = 1e-5,
-    absolute_tolerance: float = 1e-4,
-    relative_tolerance: float = 1e-3,
-) -> tuple[bool, float]:
+def check_tensor_gradient(make_loss: Callable[[Tensor], Tensor], tensor: Tensor, *, epsilon: float = 1e-5, absolute_tolerance: float = 1e-4, relative_tolerance: float = 1e-3) -> tuple[bool, float]:
     tensor.zero_grad()
     loss = make_loss(tensor)
     loss.backward()
@@ -79,16 +68,13 @@ def check_tensor_gradient(
 
     def function(data: NDArray[np.float64]) -> float:
         probe = Tensor(data, requires_grad=False)
+
         return float(make_loss(probe).data)
 
     numeric = finite_difference_gradient(function, tensor.data.copy(), epsilon=epsilon)
-    relative_error = float(
-        np.linalg.norm(analytic - numeric)
-        / (np.linalg.norm(analytic) + np.linalg.norm(numeric) + 1e-12)
-    )
-    passed = bool(
-        np.allclose(analytic, numeric, atol=absolute_tolerance, rtol=relative_tolerance)
-    )
+    relative_error = float(np.linalg.norm(analytic - numeric) / (np.linalg.norm(analytic) + np.linalg.norm(numeric) + 1e-12))
+    passed = bool(np.allclose(analytic, numeric, atol=absolute_tolerance, rtol=relative_tolerance))
+
     return passed, relative_error
 ```
 
@@ -107,9 +93,6 @@ from src import Tensor
 from src.gradcheck import check_tensor_gradient
 
 x = Tensor([0.2, -0.5, 1.1], requires_grad=True)
-passed, relative_error = check_tensor_gradient(
-    lambda tensor: tensor.relu().power(2).sum(),
-    x,
-)
+passed, relative_error = check_tensor_gradient(lambda tensor: tensor.relu().power(2).sum(), x)
 print(passed, relative_error)
 ```
