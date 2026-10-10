@@ -43,6 +43,8 @@ Base class for anything with learnable parameters.
 | `forward()` | Define the forward pass |
 | `__call__()` | Calls `forward()` |
 
+### **`parameters()`**
+
 ```python
 class Module:
     def parameters(self) -> list[Tensor]:

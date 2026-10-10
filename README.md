@@ -1,6 +1,6 @@
-# **Neural Network MLP**
+# **Multilayer Perceptron Neural Network**
 
-**MLP** (Multilayer Perceptron) implemented from scratch with **Python** and **NumPy** only. The project covers tensors, reverse mode autograd, backpropagation, linear layers, activations (ReLU, Tanh, Sigmoid, Softmax), losses (MSE, BCE with logits, Cross Entropy), optimizers (SGD with momentum, Adam), minibatch training, finite difference gradient checks, and demos on XOR, moons, and spirals. No PyTorch, TensorFlow, or JAX.
+**Multilayer Perceptron** implemented from scratch with **Python** and **NumPy** only. The project covers tensors, reverse mode autograd, backpropagation, linear layers, activations (ReLU, Tanh, Sigmoid, Softmax), losses (MSE, BCE with logits, Cross Entropy), optimizers (SGD with momentum, Adam), minibatch training, finite difference gradient checks, and demos on XOR, moons, and spirals. No PyTorch, TensorFlow, or JAX.
 
 > *The repository is organized as an ordered, step by step curriculum. Each step includes math notes and maps to matching source files.*
 
@@ -116,7 +116,7 @@ $$
 
 | Step | Topic | Code | Guide |
 |------|-------|------|-------|
-| 01 | Tensors and ops | `src/tensor.py` | [docs/Tensors.md](docs/Tensors.md) |
+| 01 | Tensors and operations | `src/tensor.py` | [docs/Tensors.md](docs/Tensors.md) |
 | 02 | Autograd / chain rule | `src/tensor.py` (`backward`) | [docs/Autograd.md](docs/Autograd.md) |
 | 03 | Gradient checking | `src/gradcheck.py` | [docs/Gradcheck.md](docs/Gradcheck.md) |
 | 04 | Modules and `Linear` | `src/modules.py` | [docs/Layers.md](docs/Layers.md) |
@@ -179,7 +179,7 @@ train(model, BCEWithLogitsLoss(), Adam(model.parameters(), learning_rate=0.05), 
 ```text
 neural-network-mlp/
 ├── src/
-│   ├── tensor.py       # Tensor and autograd ops
+│   ├── tensor.py       # Tensor and autograd operations
 │   ├── gradcheck.py    # Finite difference checks
 │   ├── modules.py      # Linear, activations, Sequential
 │   ├── losses.py       # MSE, BCE, CrossEntropy

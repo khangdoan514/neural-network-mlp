@@ -17,7 +17,7 @@ Elementwise nonlinearities so stacked `Linear` layers do not collapse to one aff
 
 Without a nonlinearity, $W_2(W_1 x + b_1) + b_2$ is still one linear map. ReLU / Tanh / Sigmoid break that collapse so the network can learn XOR-like boundaries.
 
-Softmax is usually applied over the class axis. The backward pass uses the Jacobian–vector product above ($p=\mathrm{softmax}(z)$, $g=\dot p$).
+Softmax is usually applied over the class axis. The backward pass uses the Jacobian vector product above ($p=\mathrm{softmax}(z)$, $g=\dot p$).
 
 ---
 
@@ -75,7 +75,7 @@ def sigmoid(self) -> Tensor:
 
 ### **`softmax()`**
 
-Stable softmax (subtract max before `exp`). Backward uses the JVP form from the math table.
+Stable softmax (subtract max before `exp`).  Backward uses the Jacobian vector product form from the math table.
 
 ```python
 def softmax(self, axis: int = -1) -> Tensor:
@@ -104,19 +104,33 @@ def softmax(self, axis: int = -1) -> Tensor:
 
 Thin layers that call the matching `Tensor` method so activations compose with `Linear` and `Sequential`.
 
+### **`ReLU`**
+
 ```python
 class ReLU(Module):
     def forward(self, input: Tensor) -> Tensor:
         return input.relu()
+```
 
+### **`Tanh`**
+
+```python
 class Tanh(Module):
     def forward(self, input: Tensor) -> Tensor:
         return input.tanh()
+```
 
+### **`Sigmoid`**
+
+```python
 class Sigmoid(Module):
     def forward(self, input: Tensor) -> Tensor:
         return input.sigmoid()
+```
 
+### **`Softmax`**
+
+```python
 class Softmax(Module):
     def __init__(self, axis: int = -1) -> None:
         self.axis = axis

@@ -18,7 +18,7 @@ Common MLP shapes:
 
 ---
 
-## **Utility Functions**
+## **Helper Functions**
 
 ### **Convert Input to a NumPy Array**
 
@@ -123,11 +123,11 @@ Also available:
 
 ## **Core Operations**
 
-Each op stores a local backward closure on the output tensor. How those closures are wired is covered in [Autograd.md](Autograd.md).
+Each operation stores a local backward closure on the output tensor. How those closures are wired is covered in [Autograd.md](Autograd.md).
 
 ### **Shared Binary Function**
 
-Most elementwise binary ops go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
+Most elementwise binary operations go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
 
 ```python
 def binary(self, other: ArrayLike | Tensor, *, forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_a: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_b: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], operation: str) -> Tensor:
@@ -154,7 +154,7 @@ def binary(self, other: ArrayLike | Tensor, *, forward: Callable[[NDArray[np.flo
 
 ### **Arithmetic Local Rules**
 
-| Op | Forward | Backward |
+| Operation | Forward | Backward |
 |----|---------|----------|
 | Add | $c = a + b$ | $\dot a = \dot c$, $\dot b = \dot c$ |
 | Sub | $c = a - b$ | $\dot a = \dot c$, $\dot b = -\dot c$ |
@@ -194,7 +194,7 @@ def matmul(self, other: ArrayLike | Tensor) -> Tensor:
     return out
 ```
 
-### **Reductions and Shape Ops**
+### **Reductions and Shape Operations**
 
 - `sum` / `mean` — reduce values; backward scatters the upstream gradient back to the full shape.
 - `reshape` — view change; backward reshapes the gradient to the original shape.
@@ -202,7 +202,7 @@ def matmul(self, other: ArrayLike | Tensor) -> Tensor:
 
 ### **Activations on the Tensor**
 
-| Op | Forward | Backward |
+| Operation | Forward | Backward |
 |----|---------|----------|
 | ReLU | $\max(x,0)$ | $\dot x = \dot y \cdot 1_{x>0}$ |
 | Tanh | $\tanh x$ | $\dot x = \dot y \cdot (1-\tanh^{2} x)$ |

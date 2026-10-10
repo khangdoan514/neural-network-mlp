@@ -1,6 +1,6 @@
 # **Autograd**
 
-Reverse mode automatic differentiation: build a graph on the forward pass, then push gradients backward with the chain rule. Each op stores a local `gradient_function` on its output; `backward()` walks the graph in reverse and runs those rules.
+Reverse mode automatic differentiation: build a graph on the forward pass, then push gradients backward with the chain rule. Each operation stores a local `gradient_function` on its output; `backward()` walks the graph in reverse and runs those rules.
 
 > *`src/tensor.py`*
 
@@ -16,13 +16,13 @@ $$
 
 Reverse mode:
 
-1. Forward: evaluate ops and record parents on each output tensor.
+1. Forward: evaluate operations and record parents on each output tensor.
 2. Seed $\frac{\partial L}{\partial L} = 1$ at the scalar loss.
 3. Walk the graph backward; each node applies its local rule and accumulates into parent `.grad` buffers.
 
-Local rules for the ops used most in an MLP:
+Local rules for the operations used most in an MLP:
 
-| Op | Forward | Backward |
+| Operation | Forward | Backward |
 |----|---------|----------|
 | Add | $c = a + b$ | $\dot a = \dot c$, $\dot b = \dot c$ |
 | Sub | $c = a - b$ | $\dot a = \dot c$, $\dot b = -\dot c$ |
@@ -42,7 +42,7 @@ Every tensor that participates in an op carries the edges needed for reverse mod
 | Field | Role |
 |-------|------|
 | `parents` | Upstream tensors that produced this node |
-| `operation` | Debug name of the creating op |
+| `operation` | Debug name of the creating operation |
 | `gradient_function` | Local reverse mode rule (closure) |
 | `grad` | Accumulator for $\partial L / \partial(\text{this tensor})$ |
 
@@ -110,7 +110,7 @@ def zero_grad(self) -> None:
 
 ### **Shared Binary Function**
 
-Most elementwise binary ops go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
+Most elementwise binary operations go through `binary`. It runs a forward NumPy function, builds the output tensor, and attaches one `local_backward` that updates both parents through `unbroadcast`.
 
 ```python
 def binary(self, other: ArrayLike | Tensor, *, forward: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_a: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], backward_for_b: Callable[[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]], operation: str) -> Tensor:

@@ -34,7 +34,7 @@ Using logits + log-softmax (or the BCE-with-logits identity) avoids an explicit 
 
 ---
 
-## **`MSELoss`**
+## **The `MSELoss` Class**
 
 Mean squared error: `mean((prediction - target)^2)`.
 
@@ -48,7 +48,7 @@ class MSELoss(Module):
 
 ---
 
-## **`BCEWithLogitsLoss`**
+## **The `BCEWithLogitsLoss` Class**
 
 Binary cross entropy on raw logits. Uses the stable rewrite above so large positive or negative logits do not overflow.
 
@@ -70,7 +70,7 @@ Explanation:
 
 ---
 
-## **`CrossEntropyLoss`**
+## **The `CrossEntropyLoss` Class**
 
 Multi-class cross entropy from logits. `logits` has shape `(N, C)`; `target` has integer class indices of shape `(N,)`.
 
