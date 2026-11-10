@@ -39,7 +39,7 @@ Base class for anything with learnable parameters.
 |--------|------|
 | `parameters()` | Collect every `Tensor` with `requires_grad=True` on this module |
 | `zero_grad()` | Zero `.grad` on all parameters |
-| `train_mode()` / `eval_mode()` | Toggle training flag (used later for dropout, batch norm, etc.) |
+| `train_mode()` / `eval_mode()` | Toggle the training flag (used later for dropout and batch norm) |
 | `forward()` | Define the forward pass |
 | `__call__()` | Calls `forward()` |
 

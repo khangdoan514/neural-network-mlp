@@ -2,7 +2,7 @@
 
 Toy datasets and demos that prove the MLP stack works end to end. Data helpers live in `src/data.py`; runnable scripts live under `examples/`.
 
-> *`src/data.py` · `examples/`*
+> *`src/data.py`, `examples/`*
 
 ---
 

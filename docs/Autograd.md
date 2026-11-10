@@ -28,8 +28,11 @@ Local rules for the operations used most in an MLP:
 | Sub | $c = a - b$ | $\dot a = \dot c$, $\dot b = -\dot c$ |
 | Mul | $c = a \cdot b$ | $\dot a = \dot c \cdot b$, $\dot b = \dot c \cdot a$ |
 | Div | $c = a / b$ | $\dot a = \dot c / b$, $\dot b = -\dot c \cdot a / b^{2}$ |
+| Pow | $c = a^{n}$ | $\dot a = \dot c \cdot n a^{n-1}$ |
 | Matmul | $C = AB$ | $\dot A = \dot C B^{\top}$, $\dot B = A^{\top}\dot C$ |
-| ReLU | $y = \max(x,0)$ | $\dot x = \dot y \cdot 1_{x>0}$ |
+| ReLU | $y = \max(x, 0)$ | $\dot x = \dot y \cdot 1_{x>0}$ |
+| Tanh | $y = \tanh x$ | $\dot x = \dot y \, (1 - y^{2})$ |
+| Sigmoid | $y = \sigma(x)$ | $\dot x = \dot y \, y(1-y)$ |
 
 Dot notation $\dot a$ means $\frac{\partial L}{\partial a}$, the upstream gradient flowing into $a$.
 
@@ -37,7 +40,7 @@ Dot notation $\dot a$ means $\frac{\partial L}{\partial a}$, the upstream gradie
 
 ## **Graph Fields**
 
-Every tensor that participates in an op carries the edges needed for reverse mode:
+Every tensor that participates in an operation carries the edges needed for reverse mode:
 
 | Field | Role |
 |-------|------|

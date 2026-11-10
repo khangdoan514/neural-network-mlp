@@ -2,7 +2,7 @@
 
 Elementwise nonlinearities so stacked `Linear` layers do not collapse to one affine map. Math and autograd live on `Tensor`; `Module` wrappers let you drop activations into a network.
 
-> *`src/tensor.py` · `src/modules.py`*
+> *`src/tensor.py`, `src/modules.py`*
 
 ---
 
@@ -15,7 +15,7 @@ Elementwise nonlinearities so stacked `Linear` layers do not collapse to one aff
 | Sigmoid | $\sigma(x)=\dfrac{1}{1+e^{-x}}$ | $\dot x = \dot y \cdot \sigma(x)(1-\sigma(x))$ |
 | Softmax | $\mathrm{softmax}(z)_{i}=\dfrac{e^{z_{i}}}{\sum_{j} e^{z_{j}}}$ | $\dot z = p \odot (g - \mathbf{1}^{\top}(g \odot p))$ |
 
-Without a nonlinearity, $W_2(W_1 x + b_1) + b_2$ is still one linear map. ReLU / Tanh / Sigmoid break that collapse so the network can learn XOR-like boundaries.
+Without a nonlinearity, $W_2(W_1 x + b_1) + b_2$ is still one linear map. ReLU, Tanh, and Sigmoid break that collapse so the network can learn XOR-like boundaries. The ReLU subgradient at zero is taken to be zero. Sigmoid squashes to $(0, 1)$. Tanh squashes to $(-1, 1)$.
 
 Softmax is usually applied over the class axis. The backward pass uses the Jacobian vector product above ($p=\mathrm{softmax}(z)$, $g=\dot p$).
 
